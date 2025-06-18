@@ -1,11 +1,12 @@
 // --- IMPORTACIONES DE FIREBASE ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
-// --- CONFIGURACIÓN DE FIREBASE (TUS DATOS) ---
-// ADVERTENCIA DE SEGURIDAD: Has expuesto tus claves de configuración de Firebase en el código del lado del cliente.
-// Esto es normal para la 'apiKey', pero tu base de datos debe estar protegida con "Firebase Rules"
-// para evitar que cualquiera con estas claves pueda leer o escribir en tu base de datos.
+// Activa logging detallado si lo deseas
+setLogLevel('debug');
+
+// --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyB0djqHeWvNLjWiBkNKMVz_SKbN2ulGcxY",
   authDomain: "checklist2025b1.firebaseapp.com",
@@ -19,505 +20,181 @@ const firebaseConfig = {
 // --- INICIALIZACIÓN DE FIREBASE ---
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const tareasCollectionRef = collection(db, "tareas");
+const auth = getAuth(app);
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- ESTRUCTURA DEL PROGRAMA Y CHECKLIST ---
+const programa = [
+  { sesion: "Viernes Mañana", participantes: [
+      { rol: "Presidente", nombre: "David Castro", hora: "9:30" },
+      { rol: "Oración", nombre: "Francisco José Sánchez" },
+      { rol: "Discursante", nombre: "Julián Lasheras ¿Qué es la adoración pura?", hora: "9:40", numero: 1 },
+      { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL: Las buenas noticias según Jesús (Episodio 1).", hora: "10:10", numero: 2 },
+      { rol: "Discursante", nombre: "Domingo Tarrasón", hora: "10:50", numero: 3 },
+      { rol: "Discursante", nombre: "Pedro Medina", hora: "11:11", numero: 4 },
+      { rol: "Discursante", nombre: "Daniel Velasco", hora: "11:28", numero: 5 },
+      { rol: "Discursante", nombre: "Álex Botella", hora: "11:45", numero: 6 }
+    ]
+  },
+  { sesion: "Viernes Tarde", participantes: [
+      { rol: "Presidente", nombre: "Eduardo Ayala" },
+      { rol: "Discursante", nombre: "Miguel Solé", hora: "13:50", numero: 7 },
+      { rol: "Discursante", nombre: "David Aleixandri", hora: "14:06", numero: 8 },
+      { rol: "Discursante", nombre: "David Maldonado", hora: "14:22", numero: 9 },
+      { rol: "Discursante", nombre: "Juan Martín Prior", hora: "14:36", numero: 10 },
+      { rol: "Discursante", nombre: "Elliot Miguel", hora: "15:00", numero: 11 },
+      { rol: "Discursante", nombre: "José Bonet", hora: "15:12", numero: 12 },
+      { rol: "Discursante", nombre: "Santiago Cardona", hora: "15:21", numero: 13 },
+      { rol: "Discursante", nombre: "Israel Malla", hora: "15:30", numero: 14 },
+      { rol: "Discursante", nombre: "Bárbaro Yuliexi Tejera Rios", hora: "15:39", numero: 15 },
+      { rol: "Discursante", nombre: "Rafael Corral", hora: "15:48", numero: 16 },
+      { rol: "Discursante", nombre: "Michel Gottardo", hora: "15:58", numero: 17 },
+      { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "16:10", numero: 18 },
+      { rol: "Oración Final", nombre: "Pedro Mora" }
+    ]
+  },
+  { sesion: "Sábado Mañana", participantes: [
+      { rol: "Presidente", nombre: "Abel Reguant" },
+      { rol: "Oración", nombre: "Ricardo Cordovilla" },
+      { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL:¿Qué buscan?", hora: "9:40", numero: 19 },
+      { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL:Las buenas noticias según Jesús (Episodio 2).", hora: "9:50", numero: 20 },
+      { rol: "Discursante", nombre: "Gabriel Quintana", hora: "10:30", numero: 21 },
+      { rol: "Discursante", nombre: "Manuel Casino", hora: "10:40", numero: 22 },
+      { rol: "Discursante", nombre: "Esteban Martín", hora: "10:49", numero: 23 },
+      { rol: "Discursante", nombre: "Kevin Adiel Cobo (BTL)", hora: "10:59", numero: 24 },
+      { rol: "Discursante", nombre: "Rubén Verdés", hora: "11:09", numero: 25 },
+      { rol: "Discursante", nombre: "David Mercader", hora: "11:17", numero: 26 },
+      { rol: "Discursante", nombre: "Daniel Sellares", hora: "11:25", numero: 27 },
+      { rol: "Discursante", nombre: "Natán Becerril", hora: "11:34", numero: 28 }
+    ]
+  },
+  { sesion: "Sábado Tarde", participantes: [
+      { rol: "Presidente", nombre: "Climent Ambrós" },
+      { rol: "Discursante", nombre: "Jonatán Vicente", hora: "13:50", numero: 29 },
+      { rol: "Discursante", nombre: "Santiago Sáez", hora: "14:00", numero: 30 },
+      { rol: "Discursante", nombre: "Ricardo Anguita", hora: "14:09", numero: 31 },
+      { rol: "Discursante", nombre: "Josué Rabaneda", hora: "14:20", numero: 32 },
+      { rol: "Discursante", nombre: "Edgar Teruel (BTL)", hora: "14:45", numero: 33 },
+      { rol: "Discursante", nombre: "Álvaro Paniagua", hora: "14:56", numero: 34 },
+      { rol: "Discursante", nombre: "Adolfo Forniels", hora: "15:06", numero: 35 },
+      { rol: "Discursante", nombre: "Alfonso Guerrero", hora: "15:30", numero: 36 },
+      { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "16:00", numero: 37 },
+      { rol: "Oración Final", nombre: "Jairo José Galán" }
+    ]
+  },
+  { sesion: "Domingo Mañana", participantes: [
+      { rol: "Presidente", nombre: "Juan Alcaraz" },
+      { rol: "Oración", nombre: "José Diego" },
+      { rol: "Discursante", nombre: "Isaac Díaz", hora: "9:40", numero: 38 },
+      { rol: "Discursante", nombre: "Benjamín Ferrer", hora: "9:55", numero: 39 },
+      { rol: "Discursante", nombre: "Francisco Javier Vila", hora: "10:07", numero: 40 },
+      { rol: "Discursante", nombre: "Joseph Salazar", hora: "10:21", numero: 41 },
+      { rol: "Discursante", nombre: "Fernando Teruel", hora: "10:35", numero: 42 },
+      { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL: Los campos están Blacos, listos para la cosecha", hora: "10:49", numero: 43 },
+      { rol: "Discursante", nombre: "José Manuel Lara", hora: "11:15", numero: 44 },
+      { rol: "Discursante", nombre: "Nino Llopis", hora: "11:45", numero: 45 }
+    ]
+  },
+  { sesion: "Domingo Tarde", participantes: [
+      { rol: "Presidente", nombre: "Julian Lasheras" },
+      { rol: "Discursante", nombre: "PRODUCCIÓN AUDIOVISUAL", hora: "13:50", numero: 46 },
+      { rol: "Discursante", nombre: "Julian Lasheras", hora: "14:45", numero: 47 },
+      { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "14:54", numero: 48 },
+      { rol: "Oración Final", nombre: "Andres Mayor (Betel)" }
+    ]
+  }
+];
 
-    // --- CONFIGURACIÓN PRINCIPAL DE LA APP ---
-    // ADVERTENCIA DE SEGURIDAD: Esta contraseña es visible para cualquier persona que vea el código fuente.
-    const contraseñaCorrecta = "programa2025"; 
-    const SESSION_KEY = 'isLoggedIn-checklist2025';
-    const programa = [
-        {
-            sesion: "Viernes Mañana",
-            participantes: [
-                { rol: "Presidente", nombre: "David Castro", hora: "9:30" },
-                { rol: "Oración", nombre: "Francisco José Sánchez" },
-                { rol: "Discursante", nombre: "Julián Lasheras ¿Qué es la adoración pura?", hora: "9:40", numero: 1 },
-                { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL: Las buenas noticias según Jesús (Episodio 1).", hora: "10:10", numero: 2 },
-                { rol: "Discursante", nombre: "Domingo Tarrasón", hora: "10:50", numero: 3 },
-                { rol: "Discursante", nombre: "Pedro Medina", hora: "11:11", numero: 4 },
-                { rol: "Discursante", nombre: "Daniel Velasco", hora: "11:28", numero: 5 },
-                { rol: "Discursante", nombre: "Álex Botella", hora: "11:45", numero: 6 },
-            ]
-        },
-        {
-            sesion: "Viernes Tarde",
-            participantes: [
-                { rol: "Presidente", nombre: "Eduardo Ayala" },
-                { rol: "Discursante", nombre: "Miguel Solé", hora: "13:50", numero: 7 },
-                { rol: "Discursante", nombre: "David Aleixandri", hora: "14:06", numero: 8 },
-                { rol: "Discursante", nombre: "David Maldonado", hora: "14:22", numero: 9 },
-                { rol: "Discursante", nombre: "Juan Martín Prior", hora: "14:36", numero: 10 },
-                { rol: "Discursante", nombre: "Elliot Miguel", hora: "15:00", numero: 11 },
-                { rol: "Discursante", nombre: "José Bonet", hora: "15:12", numero: 12 },
-                { rol: "Discursante", nombre: "Santiago Cardona", hora: "15:21", numero: 13 },
-                { rol: "Discursante", nombre: "Israel Malla", hora: "15:30", numero: 14 },
-                { rol: "Discursante", nombre: "Bárbaro Yuliexi Tejera Rios", hora: "15:39", numero: 15 },
-                { rol: "Discursante", nombre: "Rafael Corral", hora: "15:48", numero: 16 },
-                { rol: "Discursante", nombre: "Michel Gottardo", hora: "15:58", numero: 17 },
-                { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "16:10", numero: 18 },
-                { rol: "Oración Final", nombre: "Pedro Mora" },
-            ]
-        },
-        {
-            sesion: "Sábado Mañana",
-            participantes: [
-                { rol: "Presidente", nombre: "Abel Reguant" },
-                { rol: "Oración", nombre: "Ricardo Cordovilla" },
-                { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL:¿Qué buscan?", hora: "9:40", numero: 19 },
-                { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL:Las buenas noticias según Jesús (Episodio 2).", hora: "9:50", numero: 20 },
-                { rol: "Discursante", nombre: "Gabriel Quintana", hora: "10:30", numero: 21 },
-                { rol: "Discursante", nombre: "Manuel Casino", hora: "10:40", numero: 22 },
-                { rol: "Discursante", nombre: "Esteban Martín", hora: "10:49", numero: 23 },
-                { rol: "Discursante", nombre: "Kevin Adiel Cobo (BTL)", hora: "10:59", numero: 24 },
-                { rol: "Discursante", nombre: "Rubén Verdés", hora: "11:09", numero: 25 },
-                { rol: "Discursante", nombre: "David Mercader", hora: "11:17", numero: 26 },
-                { rol: "Discursante", nombre: "Daniel Sellares", hora: "11:25", numero: 27 },
-                { rol: "Discursante", nombre: "Natán Becerril", hora: "11:34", numero: 28 },
-            ]
-        },
-        {
-            sesion: "Sábado Tarde",
-            participantes: [
-                { rol: "Presidente", nombre: "Climent Ambrós" },
-                { rol: "Discursante", nombre: "Jonatán Vicente", hora: "13:50", numero: 29 },
-                { rol: "Discursante", nombre: "Santiago Sáez", hora: "14:00", numero: 30 },
-                { rol: "Discursante", nombre: "Ricardo Anguita", hora: "14:09", numero: 31 },
-                { rol: "Discursante", nombre: "Josué Rabaneda", hora: "14:20", numero: 32 },
-                { rol: "Discursante", nombre: "Edgar Teruel (BTL)", hora: "14:45", numero: 33 },
-                { rol: "Discursante", nombre: "Álvaro Paniagua", hora: "14:56", numero: 34 },
-                { rol: "Discursante", nombre: "Adolfo Forniels", hora: "15:06", numero: 35 },
-                { rol: "Discursante", nombre: "Alfonso Guerrero", hora: "15:30", numero: 36 },
-                { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "16:00", numero: 37 },
-                { rol: "Oración Final", nombre: "Jairo José Galán" },
-            ]
-        },
-        {
-            sesion: "Domingo Mañana",
-            participantes: [
-                { rol: "Presidente", nombre: "Juan Alcaraz" },
-                { rol: "Oración", nombre: "José Diego" },
-                { rol: "Discursante", nombre: "Isaac Díaz", hora: "9:40", numero: 38 },
-                { rol: "Discursante", nombre: "Benjamín Ferrer", hora: "9:55", numero: 39 },
-                { rol: "Discursante", nombre: "Francisco Javier Vila", hora: "10:07", numero: 40 },
-                { rol: "Discursante", nombre: "Joseph Salazar", hora: "10:21", numero: 41 },
-                { rol: "Discursante", nombre: "Fernando Teruel", hora: "10:35", numero: 42 },
-                { rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL: Los campos están Blacos, listos para la cosecha", hora: "10:49", numero: 43 },
-                { rol: "Discursante", nombre: "José Manuel Lara", hora: "11:15", numero: 44 },
-                { rol: "Discursante", nombre: "Nino Llopis", hora: "11:45", numero: 45 },
-            ]
-        },
-        {
-            sesion: "Domingo Tarde",
-            participantes: [
-                { rol: "Presidente", nombre: "Julian Lasheras" },
-                { rol: "Discursante", nombre: "PRODUCCIÓN AUDIOVISUAL", hora: "13:50", numero: 46 },
-                { rol: "Discursante", nombre: "Julian Lasheras", hora: "14:45", numero: 47 },
-                { rol: "Discursante", nombre: "Andres Mayor (Betel)", hora: "14:54", numero: 48 },
-                { rol: "Oración Final", nombre: "Andres Mayor (Betel)" },
-            ]
-        },
-    ];
+const itemsChecklist = [
+  { id: 'recogida', texto: 'Recogida en presidencia', tipo: 'checkbox', icon: 'fa-solid fa-handshake', indicator: true },
+  { id: 'orientacion', texto: 'Orientación inicial', tipo: 'checkbox', icon: 'fa-solid fa-compass', indicator: true },
+  { id: 'maquillaje', texto: 'Maquillaje', tipo: 'radio', opciones: ['Sí','No','N/A'], icon: 'fa-solid fa-palette', indicator: true },
+  { id: 'detras_plataforma', texto: 'Listo tras bastidores (20 min)', tipo: 'checkbox', icon: 'fa-solid fa-clock', indicator: true },
+  { id: 'repaso_maquillaje', texto: 'Repaso final de maquillaje', tipo: 'checkbox', icon: 'fa-solid fa-brush', indicator: false },
+  { id: 'recordatorios', texto: 'Recordatorios finales', tipo: 'checkbox', icon: 'fa-solid fa-bullhorn', indicator: false },
+  { id: 'discursado', texto: 'Participación completada', tipo: 'checkbox', icon: 'fa-solid fa-microphone-slash', indicator: true }
+];
 
-    const itemsChecklist = [
-        { id: 'recogida', texto: 'Recogida en presidencia', tipo: 'checkbox', icon: 'fa-solid fa-handshake', indicator: true },
-        { id: 'orientacion', texto: 'Orientación inicial', tipo: 'checkbox', icon: 'fa-solid fa-compass', indicator: true },
-        { id: 'maquillaje', texto: 'Maquillaje', tipo: 'radio', opciones: ['Sí', 'No', 'N/A'], icon: 'fa-solid fa-palette', indicator: true },
-        { id: 'detras_plataforma', texto: 'Listo tras bastidores (20 min)', tipo: 'checkbox', icon: 'fa-solid fa-clock', indicator: true },
-        { id: 'repaso_maquillaje', texto: 'Repaso final de maquillaje', tipo: 'checkbox', icon: 'fa-solid fa-brush', indicator: false },
-        { id: "recordatorios", texto: "Recordatorios finales", tipo: "checkbox", icon: "fa-solid fa-bullhorn", indicator: false },
-        { id: 'discursado', texto: 'Participación completada', tipo: 'checkbox', icon: 'fa-solid fa-microphone-slash', indicator: true }
-    ];
+// --- ELEMENTOS DEL DOM ---
+const loginScreen    = document.getElementById('login-screen');
+const loginForm      = document.getElementById('login-form');
+const emailInput     = document.getElementById('email-input');
+const passwordInput  = document.getElementById('password-input');
+const loginError     = document.getElementById('login-error');
+const appContainer   = document.getElementById('app-container');
+const logoutButton   = document.getElementById('logout-button');
+const navContainer   = document.getElementById('day-nav');
+const programContainer = document.getElementById('program-container');
+const summaryPanel   = document.getElementById('summary-panel');
 
-    // --- ELEMENTOS DEL DOM ---
-    const loginScreen = document.getElementById('login-screen');
-    const loginForm = document.getElementById('login-form');
-    const passwordInput = document.getElementById('password-input');
-    const loginError = document.getElementById('login-error');
-    const appContainer = document.getElementById('app-container');
-    const logoutButton = document.getElementById('logout-button');
-    const programContainer = document.getElementById('program-container');
-    const navContainer = document.getElementById('day-nav');
-    const summaryPanel = document.getElementById('summary-panel');
+// --- FUNCIONES DE RENDERIZADO ---
+function crearAcordeon(participante, idUnico) {
+  const accordionItem = document.createElement('div');
+  accordionItem.className = 'participant-accordion';
+  accordionItem.dataset.id = idUnico;
+  accordionItem.dataset.rol = participante.rol;
+  accordionItem.dataset.nombre = participante.nombre;
 
-    // --- FUNCIONES DE RENDERIZADO ---
-    function crearAcordeon(participante, idUnico) {
-        const accordionItem = document.createElement('div');
-        accordionItem.className = 'participant-accordion';
-        accordionItem.dataset.id = idUnico;
-        accordionItem.dataset.rol = participante.rol;
-        accordionItem.dataset.nombre = participante.nombre;
+  const header = document.createElement('button');
+  header.className = 'accordion-header';
 
-        const header = document.createElement('button');
-        header.className = 'accordion-header';
-
-        const esProduccion = participante.nombre.includes('PRODUCCIÓN AUDIOVISUAL');
-        const esBetel = participante.nombre.includes('(Betel)') || participante.nombre.includes('(BTL)');
-        const esOracion = participante.rol.includes('Oración');
-
-        const itemsParaOcultarOracion = ['maquillaje', 'repaso_maquillaje', 'orientacion', 'recordatorios'];
-        const itemsParaOcultarBetel = ['orientacion', 'recordatorios'];
-        
-        let indicatorsHTML = '';
-        let showChevron = true;
-
-        if (esProduccion) {
-            showChevron = false;
-        } else {
-            indicatorsHTML = itemsChecklist
-                .filter(item => {
-                    if (!item.indicator) return false;
-                    if (esOracion && itemsParaOcultarOracion.includes(item.id)) return false;
-                    if (esBetel && itemsParaOcultarBetel.includes(item.id)) return false;
-                    return true;
-                })
-                .map(item => `<span class="indicator" data-indicator-for="${item.id}"></span>`)
-                .join('');
-        }
-        
-        header.innerHTML = `
-            <div class="participant-info">
-                <div class="participant-name">${participante.nombre}</div>
-                <div class="participant-role">${participante.rol}</div>
-            </div>
-            <div class="participant-details">
-                <div class="status-indicators">${indicatorsHTML}</div>
-                ${participante.hora ? `<span class="details-time">${participante.hora}</span>` : ''}
-                ${participante.numero ? `<span class="details-number">#${participante.numero}</span>` : ''}
-                ${showChevron ? '<i class="fas fa-chevron-down accordion-icon"></i>' : ''}
-            </div>`;
-
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-
-        if (!esProduccion) {
-            const checklistContainer = document.createElement('div');
-            checklistContainer.className = 'checklist-container';
-
-            itemsChecklist.forEach(item => {
-                if (esOracion && itemsParaOcultarOracion.includes(item.id)) return;
-                if (esBetel && itemsParaOcultarBetel.includes(item.id)) return;
-
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'checklist-item';
-                itemDiv.dataset.containerFor = item.id;
-                itemDiv.innerHTML = `<i class="icon ${item.icon}"></i><label for="check-${idUnico}-${item.id}">${item.texto}</label>`;
-
-                if (item.tipo === 'checkbox') {
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.dataset.itemId = item.id;
-                    checkbox.id = `check-${idUnico}-${item.id}`;
-                    itemDiv.appendChild(checkbox);
-                } else if (item.tipo === 'radio') {
-                    const radioGroup = document.createElement('div');
-                    radioGroup.className = 'makeup-options';
-                    item.opciones.forEach(opcion => {
-                        const radioInput = document.createElement('input');
-                        radioInput.type = 'radio';
-                        radioInput.name = `radio-${idUnico}-${item.id}`;
-                        radioInput.value = opcion;
-                        radioInput.dataset.itemId = item.id;
-                        radioInput.id = `radio-${idUnico}-${item.id}-${opcion}`;
-                        const radioLabel = document.createElement('label');
-                        radioLabel.textContent = opcion;
-                        radioLabel.setAttribute('for', radioInput.id);
-
-                        radioInput.addEventListener('mousedown', function() { this.dataset.wasChecked = this.checked; });
-                        radioInput.addEventListener('click', function() {
-                            if (this.dataset.wasChecked === 'true') {
-                                this.checked = false;
-                                this.dataset.wasChecked = 'false';
-                                this.dispatchEvent(new Event('change', { bubbles: true }));
-                            } else {
-                                this.dataset.wasChecked = 'true';
-                            }
-                        });
-
-                        radioGroup.appendChild(radioInput);
-                        radioGroup.appendChild(radioLabel);
-                    });
-                    itemDiv.appendChild(radioGroup);
-                }
-                checklistContainer.appendChild(itemDiv);
-            });
-            content.appendChild(checklistContainer);
-        }
-
-        accordionItem.appendChild(header);
-        accordionItem.appendChild(content);
-        return accordionItem;
-    }
-
-    function generarProgramaHTML() {
-        programContainer.innerHTML = '';
-        const dias = ["Viernes", "Sábado", "Domingo"];
-        dias.forEach(dia => {
-            const dayContainer = document.createElement('div');
-            dayContainer.id = `content-${dia}`;
-            dayContainer.className = 'day-content hidden';
-            const sesionesDelDia = programa.filter(s => s.sesion.startsWith(dia));
-            sesionesDelDia.forEach(sesion => {
-                const sessionBlock = document.createElement('div');
-                sessionBlock.className = 'session-block';
-                sessionBlock.innerHTML = `<h2>${sesion.sesion}</h2>`;
-                sesion.participantes.forEach((p) => {
-                    const idUnico = `${sesion.sesion.replace(/\s+/g, '-')}-${p.nombre.replace(/\s+/g, '-')}-${p.rol.replace(/\s+/g, '-')}`;
-                    sessionBlock.appendChild(crearAcordeon(p, idUnico));
-                });
-                dayContainer.appendChild(sessionBlock);
-            });
-            programContainer.appendChild(dayContainer);
+  const esProd = participante.nombre.includes('PRODUCCIÓN AUDIOVISUAL');
+  const esBetel = participante.nombre.includes('(Betel)') || participante.nombre.includes('(BTL)');
+  const esOra = participante.rol.includes('Oración');
+  const ocOra = ['maquillaje','repaso_maquillaje','orientacion','recordatorios'];
+  const ocBet = ['orientacion','recordatorios'];
+  let indicatorsHTML = '';
+  let showChevron = !esProd;
+  if (!esProd) {
+    indicatorsHTML = itemsChecklist.filter(it => it.indicator && !(esOra&&ocOra.includes(it.id)) && !(esBetel&&ocBet.includes(it.id)))
+      .map(it => `<span class="indicator" data-indicator-for="${it.id}"></span>`).join('');
+  }
+  header.innerHTML = `
+    <div class="participant-info">
+      <div class="participant-name">${participante.nombre}</div>
+      <div class="participant-role">${participante.rol}</div>
+    </div>
+    <div class="participant-details">
+      <div class="status-indicators">${indicatorsHTML}</div>
+      ${participante.hora?`<span class="details-time">${participante.hora}</span>`:''}
+      ${participante.numero?`<span class="details-number">#${participante.numero}</span>`:''}
+      ${showChevron?'<i class="fas fa-chevron-down accordion-icon"></i>':''}
+    </div>`;
+  const content = document.createElement('div'); content.className = 'accordion-content';
+  if (!esProd) {
+    const ck = document.createElement('div'); ck.className='checklist-container';
+    itemsChecklist.forEach(item=>{
+      if ((esOra&&ocOra.includes(item.id))||(esBetel&&ocBet.includes(item.id))) return;
+      const div = document.createElement('div'); div.className='checklist-item'; div.dataset.containerFor=item.id;
+      div.innerHTML = `<i class="icon ${item.icon}"></i><label for="check-${idUnico}-${item.id}">${item.texto}</label>`;
+      if(item.tipo==='checkbox'){
+        const inp=document.createElement('input'); inp.type='checkbox'; inp.dataset.itemId=item.id; inp.id=`check-${idUnico}-${item.id}`;
+        div.appendChild(inp);
+      } else {
+        const grp=document.createElement('div'); grp.className='makeup-options';
+        item.opciones.forEach(opt=>{
+          const r=document.createElement('input'); r.type='radio'; r.name=`radio-${idUnico}-${item.id}`; r.value=opt; r.dataset.itemId=item.id;
+          r.id=`radio-${idUnico}-${item.id}-${opt}`; const l=document.createElement('label'); l.setAttribute('for',r.id); l.textContent=opt;
+          r.addEventListener('mousedown',()=>r.dataset.wasChecked=r.checked);
+          r.addEventListener('click',()=>{if(r.dataset.wasChecked==='true'){r.checked=false;r.dataset.wasChecked='false';r.dispatchEvent(new Event('change',{bubbles:true}));}else r.dataset.wasChecked='true';});
+          grp.append(r,l);
         });
-        document.getElementById('content-Viernes').classList.remove('hidden');
-    }
-
-    // --- LÓGICA DE ESTADO Y ACTUALIZACIÓN DE UI ---
-    function actualizarEstadoUI(accordionItem) {
-        if (!accordionItem) return;
-
-        const nombre = accordionItem.dataset.nombre || '';
-        const esProduccion = nombre.includes('PRODUCCIÓN AUDIOVISUAL');
-
-        // --- MODIFICACIÓN: Lógica para casos especiales ---
-        if (esProduccion) {
-            accordionItem.classList.add('is-audiovisual'); // <-- ¡AQUÍ ESTÁ EL CAMBIO!
-            accordionItem.style.setProperty('--progress-percent', '0%');
-            accordionItem.classList.remove('is-complete');
-            return; // No hacer nada más para la producción audiovisual
-        }
-        
-        const rol = accordionItem.dataset.rol;
-        const esBetel = nombre.includes('(Betel)') || nombre.includes('(BTL)');
-        const esOracion = rol && rol.includes('Oración');
-        const itemsParaOcultarOracion = ['maquillaje', 'repaso_maquillaje', 'orientacion', 'recordatorios'];
-        const itemsParaOcultarBetel = ['orientacion', 'recordatorios'];
-
-        const makeupRadio = accordionItem.querySelector('input[data-item-id="maquillaje"]:checked');
-        const repasoContainer = accordionItem.querySelector('[data-container-for="repaso_maquillaje"]');
-        const esMaquillajeNoAplicable = makeupRadio && makeupRadio.value === 'N/A';
-
-        if (repasoContainer) {
-            const repasoInput = repasoContainer.querySelector('input');
-            if(repasoInput) {
-                repasoContainer.classList.toggle('disabled', esMaquillajeNoAplicable);
-                repasoInput.disabled = esMaquillajeNoAplicable;
-                if (esMaquillajeNoAplicable && repasoInput.checked) {
-                    repasoInput.checked = false;
-                    repasoInput.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        }
-
-        const totalItemsConsiderados = itemsChecklist.filter(item => {
-            if (esOracion && itemsParaOcultarOracion.includes(item.id)) return false;
-            if (esBetel && itemsParaOcultarBetel.includes(item.id)) return false;
-            if (esMaquillajeNoAplicable && item.id === 'repaso_maquillaje') return false;
-            return true;
-        }).length;
-
-        let completados = 0;
-        const itemsRevisados = {};
-        accordionItem.querySelectorAll('input[data-item-id]').forEach(input => {
-            if (input.disabled || itemsRevisados[input.dataset.itemId]) return;
-
-            if ((input.type === 'checkbox' && input.checked) || (input.type === 'radio' && accordionItem.querySelector(`input[name="${input.name}"]:checked`))) {
-                completados++;
-            }
-            itemsRevisados[input.dataset.itemId] = true;
-        });
-
-        const porcentaje = totalItemsConsiderados > 0 ? (completados / totalItemsConsiderados) * 100 : 0;
-        accordionItem.style.setProperty('--progress-percent', `${porcentaje}%`);
-        const isComplete = porcentaje >= 100;
-        accordionItem.classList.toggle('is-complete', isComplete);
-
-        accordionItem.querySelectorAll('.indicator').forEach(indicator => {
-            const itemId = indicator.dataset.indicatorFor;
-            const input = accordionItem.querySelector(`input[data-item-id="${itemId}"]`);
-            indicator.className = 'indicator';
-            indicator.classList.add(`indicator-for-${itemId}`);
-            
-            if (input && input.type === 'checkbox' && input.checked) {
-                indicator.classList.add(itemId);
-            } else if (input && input.type === 'radio') {
-                const checkedRadio = accordionItem.querySelector(`input[name="${input.name}"]:checked`);
-                if (checkedRadio) {
-                    const cleanValue = checkedRadio.value.toLowerCase().replace('/', '');
-                    indicator.classList.add(`maquillaje-${cleanValue}`);
-                }
-            }
-        });
-    }
-
-    function updateAllUI() {
-        document.querySelectorAll('.participant-accordion').forEach(acc => actualizarEstadoUI(acc));
-        updateSummary();
-    }
-
-    function updateSummary() {
-        const activeDayButton = navContainer.querySelector('.active');
-        if (!activeDayButton) return;
-        const diaActual = activeDayButton.dataset.day;
-        const containerActual = document.getElementById(`content-${diaActual}`);
-        if (!containerActual) return;
-
-        const total = containerActual.querySelectorAll('.participant-accordion:not(.is-audiovisual)').length;
-        const completados = containerActual.querySelectorAll('.participant-accordion.is-complete').length;
-        const maquillajeSi = containerActual.querySelectorAll('input[data-item-id="maquillaje"][value="Sí"]:checked').length;
-
-        summaryPanel.innerHTML = `
-            <div class="summary-item"><div class="count">${total}</div><div class="label">Participantes</div></div>
-            <div class="summary-item"><div class="count">${completados}</div><div class="label">Completos</div></div>
-            <div class="summary-item"><div class="count">${maquillajeSi}</div><div class="label">Maquillaje</div></div>`;
-        document.title = `(${completados}/${total}) Checklist ${diaActual}`;
-    }
-
-    // --- LÓGICA DE FIREBASE ---
-    async function saveStateToFirebase(uniqueId, itemId, value) {
-        try {
-            const docRef = doc(db, "tareas", uniqueId);
-            await setDoc(docRef, { [itemId]: value }, { merge: true });
-        } catch (error) {
-            console.error("❌ Error guardando en Firebase:", error);
-            alert("Error de conexión. No se pudo guardar el cambio.");
-        }
-    }
-
-    function syncStateFromFirebase() {
-        programa.forEach(sesion => {
-            sesion.participantes.forEach(p => {
-                const idUnico = `${sesion.sesion.replace(/\s+/g, '-')}-${p.nombre.replace(/\s+/g, '-')}-${p.rol.replace(/\s+/g, '-')}`;
-                
-                // No crear listeners para producciones audiovisuales
-                if (p.nombre.includes('PRODUCCIÓN AUDIOVISUAL')) {
-                    return;
-                }
-
-                const docRef = doc(db, "tareas", idUnico);
-                onSnapshot(docRef, (docFB) => {
-                    const accordionItem = document.querySelector(`.participant-accordion[data-id="${idUnico}"]`);
-                    if (!accordionItem) return;
-
-                    if (docFB.exists()) {
-                        const taskData = docFB.data();
-                        Object.keys(taskData).forEach(itemId => {
-                            if (itemId === 'id') return;
-
-                            const value = taskData[itemId];
-                            const checkbox = accordionItem.querySelector(`input[data-item-id="${itemId}"][type="checkbox"]`);
-                            if (checkbox) {
-                                if (checkbox.checked !== value) checkbox.checked = value;
-                            } else {
-                                const radios = accordionItem.querySelectorAll(`input[data-item-id="${itemId}"]`);
-                                radios.forEach(radio => {
-                                    const shouldBeChecked = radio.value === value;
-                                    if (radio.checked !== shouldBeChecked) {
-                                        radio.checked = shouldBeChecked;
-                                    }
-                                    radio.dataset.wasChecked = shouldBeChecked.toString();
-                                });
-                            }
-                        });
-                    }
-                    actualizarEstadoUI(accordionItem);
-                    updateSummary();
-                }, error => {
-                    console.error(`Error en la sincronización para ${idUnico}:`, error);
-                });
-            });
-        });
-    }
-
-    // --- MANEJADORES DE EVENTOS ---
-    function setupEventListeners() {
-        programContainer.addEventListener('click', (e) => {
-            const header = e.target.closest('.accordion-header');
-            if (header) {
-                const accordionItem = header.closest('.participant-accordion');
-                if (accordionItem && accordionItem.classList.contains('is-audiovisual')) {
-                    return;
-                }
-                header.classList.toggle('active');
-                const content = header.nextElementSibling;
-                content.classList.toggle('active');
-            }
-        });
-
-        programContainer.addEventListener('change', (e) => {
-            if (e.target.matches('input[data-item-id]')) {
-                const input = e.target;
-                const accordionItem = input.closest('.participant-accordion');
-                const uniqueId = accordionItem.dataset.id;
-                const itemId = input.dataset.itemId;
-                
-                let value;
-                if (input.type === 'checkbox') {
-                    value = input.checked;
-                } 
-                else if (input.type === 'radio') {
-                    const checkedRadio = accordionItem.querySelector(`input[name="${input.name}"]:checked`);
-                    value = checkedRadio ? checkedRadio.value : null;
-                }
-                saveStateToFirebase(uniqueId, itemId, value);
-            }
-        });
-
-        navContainer.addEventListener('click', (e) => {
-            const button = e.target.closest('.nav-button');
-            if (button && !button.classList.contains('active')) {
-                navContainer.querySelector('.active').classList.remove('active');
-                button.classList.add('active');
-                const dayForId = button.dataset.day;
-                const dayForClass = dayForId.toLowerCase().replace('á', 'a');
-                document.body.className = `day-${dayForClass}`;
-                document.querySelectorAll('.day-content').forEach(c => c.classList.add('hidden'));
-                document.getElementById(`content-${dayForId}`).classList.remove('hidden');
-                updateSummary();
-            }
-        });
-        
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem(SESSION_KEY);
-            location.reload();
-        });
-    }
-
-    // --- INICIALIZACIÓN DE LA APLICACIÓN ---
-    function startApp() {
-        loginScreen.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        document.body.className = 'day-viernes';
-
-        generarProgramaHTML();
-        setupEventListeners();
-        // Sincronizar y luego actualizar toda la UI
-        syncStateFromFirebase();
-        // Llamada inicial para asegurar que todo se renderiza correctamente
-        updateAllUI();
-    }
-
-    function init() {
-        if (localStorage.getItem(SESSION_KEY) === 'true') {
-            startApp();
-        } else {
-            loginScreen.classList.remove('hidden');
-        }
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (passwordInput.value === contraseñaCorrecta) {
-                localStorage.setItem(SESSION_KEY, 'true');
-                startApp();
-            } else {
-                loginError.classList.remove('hidden');
-                loginError.textContent = "Contraseña incorrecta. Inténtalo de nuevo.";
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
-        });
-    }
-
-    init();
-});
+        div.appendChild(grp);
+      }
+      ck.appendChild(div);
+    });
+    content.appendChild(ck);
+  }
+  accordionItem.append(header,content);
+  return accordionItem;
+}
+function generarProgramaHTML(){programContainer.innerHTML='';['Viernes','Sábado','Domingo'].forEach(d=>{const c=document.createElement('div');c.id=`content-${d}`;c.className='day-content hidden';programa.filter(s=>s.sesion.startsWith(d)).forEach(s=>{const b=document.createElement('div');b.className='session-block';b.innerHTML=`<h2>${s.sesion}</h2>`;s.participantes.forEach(p=>b.appendChild(crearAcordeon(p,`${s.sesion.replace(/\s+/g,'-')}-${p.nombre.replace(/\s+/g,'-')}-${p.rol.replace(/\s+/g,'-')}`)));c.appendChild(b);});programContainer.appendChild(c);} );document.getElementById('content-Viernes').classList.remove('hidden');}
+function actualizarEstadoUI(acc){if(!acc)return;const nom=acc.dataset.nombre; if(nom.includes('PRODUCCIÓN AUDIOVISUAL')){acc.classList.add('is-audiovisual');acc.style.setProperty('--progress-percent','0%');acc.classList.remove('is-complete');return;}const rol=acc.dataset.rol;const esOra=rol.includes('Oración');const esBetel=nom.includes('(Betel)')||nom.includes('(BTL)');const ocOra=['maquillaje','repaso_maquillaje','orientacion','recordatorios'];const ocBet=['orientacion','recordatorios'];const mR=acc.querySelector('input[data-item-id="maquillaje"]:checked');const na=mR&&mR.value==='N/A';const rpC=acc.querySelector('[data-container-for="repaso_maquillaje"]');if(rpC){const i=rpC.querySelector('input');if(i){i.disabled=na;if(na&&i.checked){i.checked=false;i.dispatchEvent(new Event('change',{bubbles:true}));}}}const total=itemsChecklist.filter(it=>!(esOra&&ocOra.includes(it.id))&&!(esBetel&&ocBet.includes(it.id))&&!(na&&it.id==='repaso_maquillaje')).length;let comp=0;const seen={};acc.querySelectorAll('input[data-item-id]').forEach(i=>{if(i.disabled||seen[i.dataset.itemId])return; if((i.type==='checkbox'&&i.checked)||(i.type==='radio'&&acc.querySelector(`input[name="${i.name}"]:checked`)))comp++;seen[i.dataset.itemId]=true;});const pct=total?comp/total*100:0;acc.style.setProperty('--progress-percent',`${pct}%`);acc.classList.toggle('is-complete',pct>=100);acc.querySelectorAll('.indicator').forEach(ind=>{ind.className='indicator';ind.classList.add(`indicator-for-${ind.dataset.indicatorFor}`);const i=acc.querySelector(`input[data-item-id="${ind.dataset.indicatorFor}"]`);if(i&&i.type==='checkbox'&&i.checked)ind.classList.add(ind.dataset.indicatorFor);else if(i&&i.type==='radio'){const c=acc.querySelector(`input[name="${i.name}"]:checked`);if(c)ind.classList.add(`maquillaje-${c.value.toLowerCase().replace('/','')}`);} });}
+function updateSummary(){const b=navContainer.querySelector('.active');if(!b)return;const d=b.dataset.day;const c=document.getElementById(`content-${d}`);const t=c.querySelectorAll('.participant-accordion:not(.is-audiovisual)').length;const co=c.querySelectorAll('.participant-accordion.is-complete').length;const mq=c.querySelectorAll('input[data-item-id="maquillaje"][value="Sí"]:checked').length;summaryPanel.innerHTML=`<div class="summary-item"><div class="count">${t}</div><div class="label">Participantes</div></div><div class="summary-item"><div class="count">${co}</div><div class="label">Completos</div></div><div class="summary-item"><div class="count">${mq}</div><div class="label">Maquillaje</div></div>`;document.title=`(${co}/${t}) Checklist ${d}`;}
+function updateAllUI(){document.querySelectorAll('.participant-accordion').forEach(acc=>actualizarEstadoUI(acc));updateSummary();}
+async function saveStateToFirebase(id,item,val){try{await setDoc(doc(db,'tareas',id),{[item]:val},{merge:true});}catch(e){console.error(e);alert('No se pudo guardar en Firebase');}}
+function syncStateFromFirebase(){programa.forEach(s=>s.participantes.forEach(p=>{const id=`${s.sesion.replace(/\s+/g,'-')}-${p.nombre.replace(/\s+/g,'-')}-${p.rol.replace(/\s+/g,'-')}`;if(p.nombre.includes('PRODUCCIÓN AUDIOVISUAL'))return;onSnapshot(doc(db,'tareas',id),d=>{const acc=document.querySelector(`.participant-accordion[data-id="${id}"]`);if(!acc)return; if(d.exists()){Object.entries(d.data()).forEach(([k,v])=>{const cb=acc.querySelector(`input[data-item-id="${k}"][type="checkbox"]`);if(cb)cb.checked=v;else acc.querySelectorAll(`input[data-item-id="${k}"]`).forEach(r=>{r.checked=(r.value===v);r.dataset.wasChecked=r.checked;});});}actualizarEstadoUI(acc);updateSummary();});}));}
+function setupEventListeners(){programContainer.addEventListener('click',e=>{const h=e.target.closest('.accordion-header');if(!h)return;const a=h.closest('.participant-accordion');if(a.classList.contains('is-audiovisual'))return;h.classList.toggle('active');h.nextElementSibling.classList.toggle('active');});programContainer.addEventListener('change',e=>{const i=e.target.closest('input[data-item-id]');if(!i)return;const a=i.closest('.participant-accordion');const v=i.type==='checkbox'?i.checked:(a.querySelector(`input[name="${i.name}"]:checked`)?.value||null);saveStateToFirebase(a.dataset.id,i.dataset.itemId,v);});navContainer.addEventListener('click',e=>{const btn=e.target.closest('.nav-button');if(!btn||btn.classList.contains('active'))return;navContainer.querySelector('.active').classList.remove('active');btn.classList.add('active');document.querySelectorAll('.day-content').forEach(d=>d.classList.add('hidden'));document.getElementById(`content-${btn.dataset.day}`).classList.remove('hidden');updateSummary();});logoutButton.addEventListener('click',async()=>await signOut(auth));}
+function showLogin(){loginScreen.classList.remove('hidden');appContainer.classList.add('hidden');loginError.classList.add('hidden');}
+function startApp(){loginScreen.classList.add('hidden');appContainer.classList.remove('hidden');generarProgramaHTML();setupEventListeners();syncStateFromFirebase();updateAllUI();}
+onAuthStateChanged(auth,u=>u?startApp():showLogin());
+loginForm.addEventListener('submit',async e=>{e.preventDefault();try{await signInWithEmailAndPassword(auth,emailInput.value,passwordInput.value);}catch(err){console.error(err);const msgs={'auth/invalid-email':'Email inválido.','auth/user-disabled':'Cuenta deshabilitada.','auth/user-not-found':'Usuario no encontrado.','auth/wrong-password':'Contraseña incorrecta.','auth/too-many-requests':'Demasiados intentos.'};loginError.textContent=msgs[err.code]||'Error al iniciar sesión.';loginError.classList.remove('hidden');}});
