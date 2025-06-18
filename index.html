@@ -1,58 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checklist del Programa</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checklist del Programa</title>
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0d6efd">
-    <link rel="apple-touch-icon" href="images/icons/icon-192x192.png">
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#0d6efd"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192x192.png"/>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="styles.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-    <noscript>
-      <p>Esta aplicación requiere JavaScript para funcionar. Por favor, actívalo en tu navegador.</p>
-    </noscript>
+  <noscript>
+    <p>
+      Esta aplicación requiere JavaScript para funcionar. Por favor, actívalo en tu
+      navegador.
+    </p>
+  </noscript>
 
-    <div id="login-screen">
-        <div class="login-container">
-            <h1>programa2025</h1>
-            <p>Por favor, introduce la contraseña para acceder.</p>
-            <form id="login-form">
-                <input type="password" id="password-input" placeholder="Contraseña" required>
-                <button type="submit">Acceder</button>
-                <p id="login-error" class="hidden">Contraseña incorrecta. Inténtalo de nuevo.</p>
-            </form>
-        </div>
+  <!-- PANTALLA DE LOGIN -->
+  <div id="login-screen">
+    <div class="login-container">
+      <h1>Acceso al Checklist</h1>
+      <form id="login-form">
+        <label for="email-input">Correo electrónico</label>
+        <input
+          type="email"
+          id="email-input"
+          placeholder="tucorreo@ejemplo.com"
+          required
+        />
+        <label for="password-input">Contraseña</label>
+        <input
+          type="password"
+          id="password-input"
+          placeholder="********"
+          required
+        />
+        <button type="submit">Entrar</button>
+        <p id="login-error" class="hidden"></p>
+      </form>
     </div>
+  </div>
 
-    <div id="app-container" class="hidden">
-        <header>
-            <h1>Checklist del Programa</h1>
-            <p>😊</p>
-            <button id="logout-button" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></button>
-        </header>
+  <!-- APLICACIÓN (visible tras login) -->
+  <div id="app-container" class="hidden">
+    <header>
+      <h1>Checklist del Programa</h1>
+      <button id="logout-button" title="Cerrar Sesión">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </header>
 
-        <nav id="day-nav">
-            <button class="nav-button active" data-day="Viernes"><i class="fas fa-calendar-day"></i> Viernes</button>
-            <button class="nav-button" data-day="Sábado"><i class="fas fa-calendar-day"></i> Sábado</button>
-            <button class="nav-button" data-day="Domingo"><i class="fas fa-calendar-day"></i> Domingo</button>
-        </nav>
+    <nav id="day-nav">
+      <button class="nav-button active" data-day="Viernes">
+        <i class="fas fa-calendar-day"></i> Viernes
+      </button>
+      <button class="nav-button" data-day="Sábado">
+        <i class="fas fa-calendar-day"></i> Sábado
+      </button>
+      <button class="nav-button" data-day="Domingo">
+        <i class="fas fa-calendar-day"></i> Domingo
+      </button>
+    </nav>
 
-        <section id="summary-panel"></section>
+    <section id="summary-panel"></section>
 
-        <main id="program-container">
-            </main>
-    </div>
+    <main id="program-container"></main>
+  </div>
 
-    <script type="module" src="script.js"></script>
+  <!-- Tu lógica en módulo ES -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
