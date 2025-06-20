@@ -280,14 +280,12 @@ main {
     box-shadow: 0 0 12px rgba(25, 135, 84, 0.6); /* Sutil resplandor para destacar */
 }
 
-.participant-accordion.is-complete .participant-role,
-.participant-accordion.is-complete .participant-congregation { /* Añadido .participant-congregation */
+.participant-accordion.is-complete .participant-role {
     color: rgba(255, 255, 255, 0.85);
 }
 
 .participant-accordion.is-complete .details-time,
-.participant-accordion.is-complete .details-number,
-.participant-accordion.is-complete .whatsapp-icon { /* Añadido .whatsapp-icon */
+.participant-accordion.is-complete .details-number {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
 }
@@ -310,8 +308,7 @@ main {
 .participant-accordion.is-audiovisual .participant-name,
 .participant-accordion.is-audiovisual .participant-role,
 .participant-accordion.is-audiovisual .details-time,
-.participant-accordion.is-audiovisual .details-number,
-.participant-accordion.is-audiovisual .participant-congregation { /* Añadido .participant-congregation */
+.participant-accordion.is-audiovisual .details-number {
     color: #333;
 }
 .participant-accordion.is-audiovisual .accordion-header {
@@ -332,8 +329,6 @@ main {
     cursor: pointer; 
     border: none;
     background-color: transparent;
-    flex-wrap: wrap; /* Permitir que los elementos se envuelvan en pantallas pequeñas */
-    gap: 0.5rem; /* Espacio entre elementos del header */
 }
 .accordion-icon { 
     font-size: 1.2em; 
@@ -343,58 +338,11 @@ main {
     transform: rotate(180deg); 
 }
 
-.participant-info { 
-    flex-grow: 1; 
-    min-width: 150px; /* Asegurar que no sea demasiado pequeño */
-}
-.participant-name { 
-    font-size: 1.1em; 
-    font-weight: 600; 
-}
-.participant-role { 
-    font-size: 0.9em; 
-    color: var(--text-secondary); 
-}
-.participant-congregation { /* Nuevo estilo para la congregación */
-    font-size: 0.85em;
-    color: var(--text-secondary);
-    margin-top: 0.2em;
-    font-weight: 500;
-}
-.participant-details { 
-    display: flex; 
-    align-items: center; 
-    gap: 1rem; 
-    margin-left: 1rem; 
-    flex-wrap: wrap; /* Permitir que los detalles se envuelvan */
-    justify-content: flex-end; /* Alinear a la derecha en el wrap */
-}
-.details-time, .details-number { 
-    background-color: #e9ecef; 
-    padding: 4px 10px; 
-    border-radius: 15px; 
-    font-size: 1em; 
-    font-weight: 700; 
-}
-
-/* Estilo para el icono de WhatsApp */
-.whatsapp-icon {
-    font-size: 1.4em; /* Tamaño un poco más grande */
-    color: #25D366; /* Color oficial de WhatsApp */
-    margin-left: 0.5rem;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out;
-}
-.whatsapp-icon:hover {
-    transform: scale(1.1);
-}
-.whatsapp-icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px; /* Un poco de padding para que sea más fácil de tocar */
-}
-
+.participant-info { flex-grow: 1; }
+.participant-name { font-size: 1.1em; font-weight: 600; }
+.participant-role { font-size: 0.9em; color: var(--text-secondary); }
+.participant-details { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+.details-time, .details-number { background-color: #e9ecef; padding: 4px 10px; border-radius: 15px; font-size: 1em; font-weight: 700; }
 
 .status-indicators { display: flex; gap: 6px; }
 .indicator { width: 10px; height: 10px; border-radius: 50%; background-color: #ced4da; transition: background-color 0.3s ease; box-shadow: inset 0 0 2px rgba(0,0,0,0.1); }
@@ -481,22 +429,6 @@ main {
     width: auto;
     border-radius: 8px;
     padding: 0.5rem 1rem;
-  }
-  .accordion-header {
-      flex-direction: column;
-      align-items: flex-start;
-  }
-  .participant-details {
-      margin-left: 0;
-      justify-content: flex-start;
-      width: 100%;
-  }
-  .participant-info {
-      width: 100%;
-      margin-bottom: 0.5rem;
-  }
-  .whatsapp-icon-container {
-      margin-left: auto; /* Empuja el icono a la derecha en móvil */
   }
 }
 
