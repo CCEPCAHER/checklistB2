@@ -37,7 +37,7 @@ body {
     padding: 1rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.4s ease; /* Transición suave para el cambio de color */
 }
 
 /* --- PANTALLA DE LOGIN --- */
@@ -159,7 +159,8 @@ header p {
     box-shadow: var(--shadow); 
     max-width: 600px; 
     margin-left: auto; 
-    margin-right: auto; 
+    margin-right: auto;
+    transition: box-shadow 0.4s ease; /* Transición para el resplandor */
 }
 .nav-button {
     flex-grow: 1; 
@@ -177,9 +178,11 @@ header p {
     gap: 0.5rem; 
     transition: background-color 0.3s ease, color 0.3s ease;
 }
-.day-viernes .nav-button.active[data-day="Viernes"] { background-color: var(--viernes-primary); color: white; }
-.day-sabado .nav-button.active[data-day="Sábado"] { background-color: var(--sabado-primary); color: white; }
-.day-domingo .nav-button.active[data-day="Domingo"] { background-color: var(--domingo-primary); color: white; }
+
+/* El `body` con la clase del día aplica el estilo al botón activo */
+body.day-viernes .nav-button.active[data-day="Viernes"] { background-color: var(--viernes-primary); color: white; }
+body.day-sabado .nav-button.active[data-day="Sábado"] { background-color: var(--sabado-primary); color: white; }
+body.day-domingo .nav-button.active[data-day="Domingo"] { background-color: var(--domingo-primary); color: white; }
 
 /* --- PANEL DE RESUMEN --- */
 #summary-panel { 
@@ -193,6 +196,7 @@ header p {
     box-shadow: var(--shadow); 
     max-width: 800px; 
     flex-wrap: wrap; 
+    transition: box-shadow 0.4s ease; /* Transición para el resplandor */
 }
 .summary-item { 
     text-align: center; 
@@ -201,15 +205,18 @@ header p {
     font-size: 1.8em; 
     font-weight: 700; 
     color: var(--text-primary); 
+    transition: color 0.4s ease;
 }
 .summary-item .label { 
     font-size: 0.9em; 
     color: var(--text-secondary); 
     font-weight: 500; 
 }
-.day-viernes .summary-item .count { color: var(--viernes-primary); }
-.day-sabado .summary-item .count { color: var(--sabado-primary); }
-.day-domingo .summary-item .count { color: var(--domingo-primary); }
+
+/* El `body` con la clase del día aplica el estilo al contador */
+body.day-viernes .summary-item .count { color: var(--viernes-primary); }
+body.day-sabado .summary-item .count { color: var(--sabado-primary); }
+body.day-domingo .summary-item .count { color: var(--domingo-primary); }
 
 main { 
     max-width: 800px; 
@@ -289,6 +296,7 @@ main {
 
 .participant-accordion.is-complete:hover {
     border-color: #146c43;
+    box-shadow: 0 0 16px rgba(25, 135, 84, 0.7);
 }
 
 /* --- NUEVO: ESTILO PARA PRODUCCIONES AUDIOVISUALES --- */
@@ -422,4 +430,40 @@ main {
     border-radius: 8px;
     padding: 0.5rem 1rem;
   }
+}
+
+/* --- ILUMINACIÓN DINÁMICA POR DÍA (NUEVA MEJORA) --- */
+/*
+  Estos estilos cambian el fondo de la página y añaden un "resplandor" 
+  sutil a los paneles principales, creando un ambiente inmersivo.
+  Se activan al añadir la clase .day-viernes, .day-sabado o .day-domingo al <body>.
+*/
+
+body.day-viernes {
+    background-color: var(--viernes-bg-light);
+}
+body.day-sabado {
+    background-color: var(--sabado-bg-light);
+}
+body.day-domingo {
+    background-color: var(--domingo-bg-light);
+}
+
+/* Resplandor temático para los paneles y acordeones al pasar el ratón */
+body.day-viernes #day-nav,
+body.day-viernes #summary-panel,
+body.day-viernes .participant-accordion:hover {
+    box-shadow: 0 5px 15px rgba(0, 95, 115, 0.12), 0 2px 6px rgba(0, 95, 115, 0.1);
+}
+
+body.day-sabado #day-nav,
+body.day-sabado #summary-panel,
+body.day-sabado .participant-accordion:hover {
+    box-shadow: 0 5px 15px rgba(174, 32, 18, 0.12), 0 2px 6px rgba(174, 32, 18, 0.1);
+}
+
+body.day-domingo #day-nav,
+body.day-domingo #summary-panel,
+body.day-domingo .participant-accordion:hover {
+    box-shadow: 0 5px 15px rgba(112, 40, 107, 0.12), 0 2px 6px rgba(112, 40, 107, 0.1);
 }
