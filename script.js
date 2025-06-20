@@ -22,7 +22,7 @@ const auth = getAuth(app);
 const programa = [
     { sesion: "Viernes Mañana", dia: "Viernes", participantes: [
         { id: "VM-PRESIDENTE-DAVID-CASTRO", rol: "Presidente", nombre: "David Castro", congregacion: "Manresa-Este", telefono: "618200006", hora: "9:20" },
-        { id: "VM-ORACION-FRANCISCO-JOSE-SANCHEZ", rol: "Oración", nombre: "Francisco José Sánchez", congregacion: "Sant Feliu de Llobregat- Norte", telefono: "697818981", hora: "9:30" },
+        { id: "VM-ORACION-FRANCISCO-JOSE-SANCHEZ", rol: "Oración", nombre: "Francisco José Sánchez", congregacion: "Sant Feliu de Llobregat- Norte", telefono: "34697818981", hora: "9:30" },
         { id: "VM-DISCURSANTE-JULIAN-LASHERAS", rol: "Discursante", nombre: "Julián Lasheras", congregacion: "Circuito ESP-B-03", telefono: "609919464", hora: "9:40", numero: 1, titulo: "¿Qué es la adoración pura?" },
         { id: "VM-VIDEO-PRODUCCION-AUDIOVISUAL-1", rol: "Video", nombre: "PRODUCCIÓN AUDIOVISUAL: Las buenas noticias según Jesús: Episodio 2.", hora: "10:10", numero: 2, titulo: "\"Este es mi Hijo\"(Parte 1)." },
         { id: "VM-DISCURSANTE-DOMINGO-TARRASON", rol: "Discursante", nombre: "Domingo Tarrasón", congregacion: "Barcelona- Artesania", telefono: "34649455497", hora: "10:50", numero: 3 },
